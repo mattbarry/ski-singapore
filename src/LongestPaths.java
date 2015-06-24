@@ -3,12 +3,12 @@ import org.jgrapht.graph.*;
 import org.jgrapht.traverse.*;
 import java.util.*;
 
-public class LongestPath<V, E> {
+public class LongestPaths<V, E> {
 
 	private DirectedGraph<V, E> graph = null;
 	private Map<V, Integer> longestPaths = null;
 	
-	public LongestPath(DirectedGraph<V, E> graph) {
+	public LongestPaths(DirectedGraph<V, E> graph) {
 		this.graph = graph;
 	}
 	
