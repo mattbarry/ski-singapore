@@ -1,8 +1,8 @@
 # Ski Singapore
 
-Written by [Matt Barry](mailto:mattbarry@gmail.com)
+Written by [Matt Barry](mailto:mattbarry@gmail.com), June 2015
 
-This is my solution to the Skiing in Singapore coding diversion that I found at the following URL: (http://geeks.redmart.com/2015/01/07/skiing-in-singapore-a-coding-diversion/)
+This is my solution to the Skiing in Singapore coding diversion that I found at the following URL: http://geeks.redmart.com/2015/01/07/skiing-in-singapore-a-coding-diversion/
 
 Given a rectangular grid of map elevations, the challenge is to find the longest path down a ski hill. You can move in any of the four cardinal directions, but only to a point on the map with a lower elevation. If there are two paths down the ski hill with the same length, the one with the steepest drop should be selected.
 
