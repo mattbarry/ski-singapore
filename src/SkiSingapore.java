@@ -1,38 +1,32 @@
 import java.net.*;
+import java.util.*;
 import org.jgrapht.*;
 import org.jgrapht.graph.*;
 
 public class SkiSingapore { 
-	
-	public static void dumpGraphPath(GraphPath<Vertex, DefaultEdge> path) {
-		System.out.println("Start: " + path.getStartVertex().getElevation());
-		System.out.println("End: " + path.getEndVertex().getElevation());
-		System.out.println("Drop: " + (path.getStartVertex().getElevation() - path.getEndVertex().getElevation()));
-		for (DefaultEdge edge : path.getEdgeList()) {
-			System.out.println(path.getGraph().getEdgeSource(edge).getElevation() 
-					+ " -> " + path.getGraph().getEdgeTarget(edge).getElevation());
-		}
-	}
 	
 	public static void main(String[] args) {
 		
 		try {
 			// Load the map from Amazon S3
 			System.out.println("Loading map...");
-			MapLoader loader = new MapLoader();
 			URL url = new URL("http://s3-ap-southeast-1.amazonaws.com/geeks.redmart.com/coding-problems/map.txt");
-			DirectedGraph<Vertex, DefaultEdge> graph = loader.loadMap(url);
+			MapLoader loader = new MapLoader();
+			DirectedGraph<MapVertex, DefaultEdge> graph = loader.loadMap(url);
 			
-			// Find the longest paths and dump them to System.out
+			// Find the longest paths
 			System.out.println("Finding longest paths...");
-			LongestPaths<Vertex, DefaultEdge> longestPaths = new LongestPaths<Vertex, DefaultEdge>(graph);
-			for (GraphPath<Vertex, DefaultEdge> path : longestPaths.getLongestPaths()) {
-				dumpGraphPath(path);
-			}
+			LongestPaths<MapVertex, DefaultEdge> longestPaths = new LongestPaths<MapVertex, DefaultEdge>(graph);
+			List<GraphPath<MapVertex, DefaultEdge>> pathList = longestPaths.getLongestPaths();
+			
+			// Sort the paths to find the steepest drop and print it System.out
+			Collections.sort(pathList, new GraphPathComparator());
+			GraphPath<MapVertex, DefaultEdge> path = pathList.get(0);
+			System.out.println("Length: " + (path.getEdgeList().size() + 1));
+			System.out.println("Drop: " + (path.getStartVertex().getElevation() - path.getEndVertex().getElevation()));
 		} catch (Exception e) {
 			System.out.println(e.getStackTrace());
 		}
-		
 	}
 
 }

@@ -1,12 +1,12 @@
+import java.util.*;
 import org.jgrapht.*;
 import org.jgrapht.graph.*;
 import org.jgrapht.traverse.*;
-import java.util.*;
 
 public class LongestPaths<V, E> {
 
 	private DirectedGraph<V, E> graph = null;
-	private Map<V, Integer> longestPaths = null;
+	private Map<V, Integer> longestPathToVertex = null;
 	
 	public LongestPaths(DirectedGraph<V, E> graph) {
 		this.graph = graph;
@@ -14,74 +14,88 @@ public class LongestPaths<V, E> {
 	
 	private void findLongestPaths(List<GraphPath<V, E>> pathList, V endVertex, V currentVertex, Stack<E> edgeStack) {
 		
-		// Inspect the surrounding nodes to determine which ones have the longest paths
-		int nextLongest = -1;
+		// Inspect the neighboring vertices to determine which ones have the longest path
+		int longestNeighboringPath = -1;
 		for (E edge : this.graph.incomingEdgesOf(currentVertex)) {
 			V source = this.graph.getEdgeSource(edge);
-			if (this.longestPaths.get(source) > nextLongest) {
-				nextLongest = this.longestPaths.get(source);
+			if (this.longestPathToVertex.get(source) > longestNeighboringPath) {
+				longestNeighboringPath = this.longestPathToVertex.get(source);
 			}
 		}
 		
 		List<E> nextEdgeList = new ArrayList<E>();
 		for (E edge : this.graph.incomingEdgesOf(currentVertex)) {
 			V source = this.graph.getEdgeSource(edge);
-			if (this.longestPaths.get(source) == nextLongest) {
+			if (this.longestPathToVertex.get(source) == longestNeighboringPath) {
 				nextEdgeList.add(edge);
 			}
 		}
 		
-		if (nextEdgeList.isEmpty()) {
-			// Reached a root node in the graph
-			V startVertex = currentVertex;
-			List<E> edgeList = new ArrayList<E>(edgeStack);
-			Collections.reverse(edgeList);
-			double weight = 0.0;
-			pathList.add(new GraphPathImpl<V, E>(this.graph, startVertex, endVertex, edgeList, weight));
-		} else {
+		if (!nextEdgeList.isEmpty()) {
+			// Visit each edge that came from a vertex with the longest path
 			for (E nextEdge : nextEdgeList) { 
 				edgeStack.push(nextEdge);
 				V nextVertex = this.graph.getEdgeSource(nextEdge);
 				findLongestPaths(pathList, endVertex, nextVertex, edgeStack);
 				edgeStack.pop();
 			}
+		} else {
+			// Create a new graph path when we reach a node with no incoming edges
+			V startVertex = currentVertex;
+			List<E> edgeList = new ArrayList<E>(edgeStack);
+			Collections.reverse(edgeList);
+			double weight = 0.0;
+			for (E edge : edgeList) {
+				weight += this.graph.getEdgeWeight(edge);
+			}
+			pathList.add(new GraphPathImpl<V, E>(this.graph, startVertex, endVertex, edgeList, weight));
 		}
+	}
+	
+	private List<V> findEndVertices() {
+		// Find the length of the longest path in the graph
+		int longestPathLength = 0;
+		for (V v : this.longestPathToVertex.keySet()) {
+			if (this.longestPathToVertex.get(v) > longestPathLength) {
+				longestPathLength = this.longestPathToVertex.get(v);
+			}
+		}
+		// Find the vertices with the longest path length
+		List<V> endVertices = new ArrayList<V>();
+		for (V v : this.longestPathToVertex.keySet()) {
+			if (this.longestPathToVertex.get(v) == longestPathLength) {
+				endVertices.add(v);
+			}
+		}
+		return endVertices;
 	}
 	
 	public List<GraphPath<V, E>> getLongestPaths() {	
 		
-		this.longestPaths = new HashMap<V, Integer>();
-		
-		// Create a topological iterator			
-		final GraphIterator<V, E> iterator = new TopologicalOrderIterator<V, E>(this.graph);
+		// Determine the length of the longest path leading to each vertex in the graph			
+		this.longestPathToVertex = new HashMap<V, Integer>();
+		GraphIterator<V, E> iterator = new TopologicalOrderIterator<V, E>(this.graph);
 		while (iterator.hasNext()) {
 			V target = iterator.next();
-			int max = 0;
-			for (E edge : this.graph.incomingEdgesOf(target)) {
-				V source = this.graph.getEdgeSource(edge);
-				if (this.longestPaths.get(source) + 1 > max) {
-					max = this.longestPaths.get(source) + 1;
+			Set<E> incomingEdges = this.graph.incomingEdgesOf(target);
+			if (!incomingEdges.isEmpty()) {
+				int longestNeighboringPath = 0;
+				for (E edge : incomingEdges) {
+					V source = this.graph.getEdgeSource(edge);
+					if (this.longestPathToVertex.get(source) > longestNeighboringPath) {
+						longestNeighboringPath = this.longestPathToVertex.get(source);
+					}
 				}
+				this.longestPathToVertex.put(target, longestNeighboringPath + 1);
+			} else {
+				this.longestPathToVertex.put(target, 0);
 			}
-			this.longestPaths.put(target, max);
 		}
 						
-		// Find the length of the longest paths
-		int longestPathLength = 0;
-		for (V v : this.longestPaths.keySet()) {
-			if (this.longestPaths.get(v) > longestPathLength) {
-				longestPathLength = this.longestPaths.get(v);
-			}
-		}
+		// Find the end vertices of the longest paths in the graph
+		List<V> endVertices = findEndVertices();
 		
-		// Get the end vertices of each longest path
-		List<V> endVertices = new ArrayList<V>();
-		for (V v : this.longestPaths.keySet()) {
-			if (this.longestPaths.get(v) == longestPathLength) {
-				endVertices.add(v);
-			}
-		}
-		
+		// Recurse back up the graph to find the starting vertices of each path
 		List<GraphPath<V, E>> paths = new ArrayList<GraphPath<V, E>>();
 		for (V v : endVertices) {
 			Stack<E> edgeStack = new Stack<E>();
