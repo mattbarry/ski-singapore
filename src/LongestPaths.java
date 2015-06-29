@@ -4,7 +4,7 @@ import org.jgrapht.graph.*;
 import org.jgrapht.traverse.*;
 
 public class LongestPaths<V, E> {
-
+	
 	private DirectedGraph<V, E> graph = null;
 	private Map<V, Integer> longestPathToVertex = null;
 	
@@ -70,11 +70,13 @@ public class LongestPaths<V, E> {
 		return endVertices;
 	}
 	
-	public List<GraphPath<V, E>> getLongestPaths() {	
-		
+	private void initLongestPathsToVertex() {
+		if (this.longestPathToVertex != null) {
+			return;
+		}
 		// Determine the length of the longest path leading to each vertex in the graph			
 		this.longestPathToVertex = new HashMap<V, Integer>();
-		GraphIterator<V, E> iterator = new TopologicalOrderIterator<V, E>(this.graph);
+		Iterator<V> iterator = new TopologicalOrderIterator<V, E>(this.graph);
 		while (iterator.hasNext()) {
 			V target = iterator.next();
 			Set<E> incomingEdges = this.graph.incomingEdgesOf(target);
@@ -91,7 +93,13 @@ public class LongestPaths<V, E> {
 				this.longestPathToVertex.put(target, 0);
 			}
 		}
-						
+	}
+	
+	public List<GraphPath<V, E>> getLongestPaths() {	
+
+		// Populate the longestPathToVertex map
+		initLongestPathsToVertex();
+		
 		// Find the end vertices of the longest paths in the graph
 		List<V> endVertices = findEndVertices();
 		
